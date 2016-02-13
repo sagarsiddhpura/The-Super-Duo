@@ -5,8 +5,11 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,6 +33,8 @@ import it.jaschke.alexandria.data.AlexandriaContract;
  * <p/>
  */
 public class BookService extends IntentService {
+
+    private static final String TAG = "BookService";
 
     private final String LOG_TAG = BookService.class.getSimpleName();
 
@@ -71,6 +76,7 @@ public class BookService extends IntentService {
      * parameters.
      */
     private void fetchBook(String ean) {
+        Log.d(TAG, "fetchBook() called with: " + "ean = [" + ean + "]");
 
         if(ean.length()!=13){
             return;
@@ -96,15 +102,16 @@ public class BookService extends IntentService {
         String bookJsonString = null;
 
         try {
-            final String FORECAST_BASE_URL = "https://www.googleapis.com/books/v1/volumes?";
+            final String BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes?";
             final String QUERY_PARAM = "q";
 
             final String ISBN_PARAM = "isbn:" + ean;
 
-            Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
+            Uri builtUri = Uri.parse(BOOKS_BASE_URL).buildUpon()
                     .appendQueryParameter(QUERY_PARAM, ISBN_PARAM)
                     .build();
 
+            Log.d(TAG, "builtUri:"+builtUri.toString());
             URL url = new URL(builtUri.toString());
 
             urlConnection = (HttpURLConnection) url.openConnection();
@@ -130,6 +137,16 @@ public class BookService extends IntentService {
             bookJsonString = buffer.toString();
         } catch (Exception e) {
             Log.e(LOG_TAG, "Error ", e);
+
+            // Added message to let user know network connectivity failed
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    Toast.makeText(BookService.this.getApplicationContext(), "Error connecting to Internet!", Toast.LENGTH_SHORT).show();
+                }
+            });
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -142,6 +159,11 @@ public class BookService extends IntentService {
                 }
             }
 
+        }
+
+        // Added null check to avoid crash
+        if(bookJsonString == null) {
+            return;
         }
 
         final String ITEMS = "items";
@@ -198,24 +220,35 @@ public class BookService extends IntentService {
 
         } catch (JSONException e) {
             Log.e(LOG_TAG, "Error ", e);
+            // Added exception clause to handle all exceptions
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Error ", e);
         }
     }
 
     private void writeBackBook(String ean, String title, String subtitle, String desc, String imgUrl) {
+        Log.d(TAG, "writeBackBook() called with: " + "ean = [" + ean + "], title = ["
+                + title + "], subtitle = [" + subtitle + "], desc = [" + desc
+                + "], imgUrl = [" + imgUrl + "]");
+
         ContentValues values= new ContentValues();
         values.put(AlexandriaContract.BookEntry._ID, ean);
         values.put(AlexandriaContract.BookEntry.TITLE, title);
         values.put(AlexandriaContract.BookEntry.IMAGE_URL, imgUrl);
         values.put(AlexandriaContract.BookEntry.SUBTITLE, subtitle);
         values.put(AlexandriaContract.BookEntry.DESC, desc);
-        getContentResolver().insert(AlexandriaContract.BookEntry.CONTENT_URI,values);
+        getContentResolver().insert(AlexandriaContract.BookEntry.CONTENT_URI, values);
     }
 
     private void writeBackAuthors(String ean, JSONArray jsonArray) throws JSONException {
+        Log.d(TAG, "writeBackAuthors() called with: " + "ean = [" + ean + "], jsonArray = [" + jsonArray + "]");
+
         ContentValues values= new ContentValues();
         for (int i = 0; i < jsonArray.length(); i++) {
             values.put(AlexandriaContract.AuthorEntry._ID, ean);
             values.put(AlexandriaContract.AuthorEntry.AUTHOR, jsonArray.getString(i));
+            Log.d(TAG, "ean:" + ean + ", author:" + jsonArray.getString(i));
+
             getContentResolver().insert(AlexandriaContract.AuthorEntry.CONTENT_URI, values);
             values= new ContentValues();
         }
