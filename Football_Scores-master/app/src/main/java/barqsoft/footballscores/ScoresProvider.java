@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.util.Log;
 
 /**
  * Created by yehya khaled on 2/25/2015.
@@ -18,9 +19,12 @@ public class ScoresProvider extends ContentProvider
     private static final int MATCHES_WITH_LEAGUE = 101;
     private static final int MATCHES_WITH_ID = 102;
     private static final int MATCHES_WITH_DATE = 103;
+
     private UriMatcher muriMatcher = buildUriMatcher();
+
     private static final SQLiteQueryBuilder ScoreQuery =
             new SQLiteQueryBuilder();
+
     private static final String SCORES_BY_LEAGUE = DatabaseContract.scores_table.LEAGUE_COL + " = ?";
     private static final String SCORES_BY_DATE =
             DatabaseContract.scores_table.DATE_COL + " LIKE ?";
@@ -101,17 +105,22 @@ public class ScoresProvider extends ContentProvider
         //Log.v(FetchScoreTask.LOG_TAG,SCORES_BY_LEAGUE);
         //Log.v(FetchScoreTask.LOG_TAG,selectionArgs[0]);
         //Log.v(FetchScoreTask.LOG_TAG,String.valueOf(match));
+        //Log.v("ScoresProvider query", "BEGIN");
         switch (match)
         {
+
             case MATCHES: retCursor = mOpenHelper.getReadableDatabase().query(
                     DatabaseContract.SCORES_TABLE,
-                    projection,null,null,null,null,sortOrder); break;
+                    projection,selection,selectionArgs,null,null,sortOrder); break;
             case MATCHES_WITH_DATE:
+                //Log.v("ScoresProvider query", "MATCHES_WITH_DATE");
                     //Log.v(FetchScoreTask.LOG_TAG,selectionArgs[1]);
                     //Log.v(FetchScoreTask.LOG_TAG,selectionArgs[2]);
                     retCursor = mOpenHelper.getReadableDatabase().query(
                     DatabaseContract.SCORES_TABLE,
-                    projection,SCORES_BY_DATE,selectionArgs,null,null,sortOrder); break;
+                    projection,SCORES_BY_DATE,selectionArgs,null,null,sortOrder);
+                //Log.v("ScoresProvider query", SCORES_BY_DATE + selectionArgs[0]);
+                break;
             case MATCHES_WITH_ID: retCursor = mOpenHelper.getReadableDatabase().query(
                     DatabaseContract.SCORES_TABLE,
                     projection,SCORES_BY_ID,selectionArgs,null,null,sortOrder); break;
@@ -120,7 +129,11 @@ public class ScoresProvider extends ContentProvider
                     projection,SCORES_BY_LEAGUE,selectionArgs,null,null,sortOrder); break;
             default: throw new UnsupportedOperationException("Unknown Uri" + uri);
         }
-        retCursor.setNotificationUri(getContext().getContentResolver(),uri);
+        try {
+            retCursor.setNotificationUri(getContext().getContentResolver(), uri);
+        }catch(NullPointerException e){
+            throw e;
+        }
         return retCursor;
     }
 

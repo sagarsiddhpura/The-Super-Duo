@@ -4,15 +4,16 @@
 
     <uses-permission
         android:name="android.permission.INTERNET"
-        android:maxSdkVersion="22" />
-
+        />
+    
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme"
+        android:supportsRtl="true">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.activities.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,14 +27,31 @@
             android:authorities="barqsoft.footballscores" />
 
         <activity
-            android:name=".AboutActivity"
+            android:name=".ui.activities.AboutActivity"
             android:label="About"
-            android:parentActivityName=".MainActivity" >
+            android:parentActivityName=".ui.activities.MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="barqsoft.footballscores.MainActivity" />
+                android:value=".ui.activities.MainActivity" />
         </activity>
+
         <service android:name=".service.myFetchService" />
+        <service android:name=".service.ListViewService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            />
+
+
+        <!-- Today Widget -->
+        <receiver
+            android:name="TodayWidgetProvider"
+            android:label="@string/title_widget_today" >
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_today" />
+        </receiver>
     </application>
+
 
 </manifest>

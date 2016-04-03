@@ -12,16 +12,20 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import it.jaschke.alexandria.api.Callback;
+import it.jaschke.alexandria.util.BarCodeScanUtil;
 
 
 public class MainActivity extends ActionBarActivity implements
         NavigationDrawerFragment.NavigationDrawerCallbacks, Callback {
+
+    private static final String TAG = "MainActivity";
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -91,6 +95,26 @@ public class MainActivity extends ActionBarActivity implements
 
     public void setTitle(int titleId) {
         title = getString(titleId);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult() called with: " + "requestCode = [" + requestCode + "], resultCode = [" + resultCode + "], data = [" + data + "]");
+        it.jaschke.alexandria.util.IntentResult intentResult = BarCodeScanUtil.parseActivityResult(requestCode, resultCode, data);
+        if (intentResult != null) {
+            String contents = intentResult.getContents();
+
+            if(contents != null) {
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                Fragment fragmentById = fragmentManager.findFragmentById(R.id.container);
+                if (fragmentById != null) {
+                    AddBook addBook = (AddBook) fragmentById;
+                    addBook.onBarcodeScanned(contents);
+                }
+            }
+        } else {
+            // Back button pressed or zxing app not present
+        }
     }
 
     public void restoreActionBar() {

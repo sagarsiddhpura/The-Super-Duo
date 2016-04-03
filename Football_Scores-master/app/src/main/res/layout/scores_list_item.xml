@@ -26,7 +26,7 @@
                 android:layout_gravity="center"
                 android:textSize="@dimen/TeamNames"
                 android:gravity="center"
-                android:text="@string/test_text"
+                android:text="@string/team_one"
                 android:id="@+id/home_name"/>
         </LinearLayout>
         <LinearLayout
@@ -76,7 +76,8 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/details_fragment_container">
+        android:id="@+id/details_fragment_container"
+        >
     </FrameLayout>
 </LinearLayout>
 
